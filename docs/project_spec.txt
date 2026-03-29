@@ -1,0 +1,172 @@
+Project Specification: Web Service for Evaluating Technical Specifications (TS) Compliance with GOST Standards
+1. Project Overview
+
+The goal of this project is to develop a web-based application that analyzes technical specification documents (TS) and evaluates their compliance with GOST standards.
+
+The system must accept documents in DOCX and PDF formats, process their content, and generate a structured report identifying violations, inconsistencies, and recommendations for improvement.
+
+This project is a prototype (MVP) intended for academic purposes (diploma project). The implementation must strictly follow the requirements without unnecessary complexity or overengineering.
+
+2. Objectives
+
+The system must:
+
+Accept TS documents (DOCX/PDF)
+Extract and normalize text
+Analyze document structure and content
+Detect violations of GOST requirements
+Generate a structured compliance report
+Provide a simple web interface for interaction
+3. Scope and Constraints
+In Scope
+Web application (backend + simple frontend)
+Rule-based and lightweight NLP analysis
+At least 10 types of compliance checks
+Processing time ≤ 60 seconds for 30–50 page documents
+Export of analysis results
+Out of Scope
+Complex enterprise architecture
+Heavy ML model training
+Authentication systems
+Advanced frontend frameworks (React/Vue not required)
+External AI APIs as the core logic
+4. Functional Requirements
+4.1 File Upload
+Upload DOCX and PDF files
+Validate file type and size
+Store file temporarily for processing
+4.2 Text Extraction
+Extract text from DOCX using appropriate libraries
+Extract text from PDF (basic support is sufficient)
+Normalize extracted text
+4.3 Document Segmentation
+Detect sections and subsections
+Identify headings
+Build internal document structure
+4.4 Compliance Checks
+
+The system must implement at least the following checks:
+
+Structural Checks
+Presence of required sections
+Correct order of sections
+Completeness of document structure
+Content Checks
+Presence of:
+Purpose
+Scope
+Functional requirements
+Non-functional requirements
+Acceptance criteria
+Quality of Requirements
+Detection of vague words (e.g., “fast”, “user-friendly”, “possible”)
+Detection of non-measurable requirements
+Metrics and Units
+Presence of numerical values
+Use of measurement units (SI)
+Consistency
+Detection of duplicated or very similar statements (basic level)
+References
+Correct references to:
+Figures
+Tables
+Appendices
+Terminology
+Consistency with glossary
+Uniform usage of terms
+Traceability (Basic)
+Attempt to link requirements with acceptance criteria (simple heuristic)
+5. Non-Functional Requirements
+Code must be clean and modular
+The system must be easy to extend
+Processing must be reasonably fast
+Output must be understandable and structured
+6. System Architecture
+
+The system must follow a modular architecture:
+
+Client (Browser)
+        ↓
+Frontend (HTML + minimal JS)
+        ↓
+Backend (FastAPI)
+        ↓
+Processing Layer (Rules + NLP)
+        ↓
+Data Storage (optional)
+7. Technology Stack
+Backend
+Python
+FastAPI
+Text Processing
+python-docx (DOCX)
+pdfminer or similar (PDF)
+NLP (lightweight)
+Regex
+Dictionaries
+Optional: spaCy / Natasha / sentence-transformers
+Storage
+SQLite or PostgreSQL (optional)
+Frontend
+Simple HTML + CSS + minimal JavaScript
+8. Data Structures
+
+The system should include the following logical components:
+
+rules — GOST compliance rules
+glossary — allowed terminology
+forbidden_phrases — vague or prohibited words
+section_templates — expected document structure
+issues — detected violations
+reports — generated results
+9. Output Requirements
+
+The system must generate a report that includes:
+
+Type of violation
+Description of the issue
+Location in the document (text fragment)
+Recommendation for correction
+Severity level (optional)
+
+Supported formats:
+
+JSON (required)
+CSV (optional)
+DOCX/PDF (optional, basic)
+10. User Interface
+
+The UI must be simple and include:
+
+File upload form
+Button to start analysis
+Display of results:
+List of issues
+Highlighted text fragments
+Filtering by issue type (optional)
+11. Evaluation Criteria (Acceptance)
+
+The system must:
+
+Support at least 10 compliance checks
+Successfully process DOCX files
+Provide structured output
+Complete analysis within reasonable time
+Demonstrate working prototype behavior
+12. Development Guidelines
+Do not overengineer
+Do not implement unnecessary features
+Focus on correctness and clarity
+Prefer rule-based logic over complex ML
+Keep implementation aligned strictly with requirements
+13. Expected Result
+
+A working prototype of a web application that:
+
+Accepts TS documents
+Analyzes them
+Detects GOST compliance issues
+Produces a clear, structured report
+
+If needed, next step:
+I will convert this into a Cursor-ready system prompt + first step prompt, so it starts building the project correctly from zero.

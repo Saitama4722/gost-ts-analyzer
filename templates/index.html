@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Проверка ТЗ на соответствие требованиям ГОСТ</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="page__header">
+        <h1 class="page__title">Проверка ТЗ на соответствие ГОСТ</h1>
+        <p class="page__lead">
+          Анализ документов технического задания (DOCX и PDF) с выявлением
+          несоответствий и замечаний в структурированном виде.
+        </p>
+      </header>
+
+      <main class="page__main">
+        <section class="content-card" aria-label="Рабочая область анализа документа">
+          <h2 class="content-card__heading">Рабочая область</h2>
+          <div class="workspace-flow">
+            <div class="upload-block">
+              <p class="upload-block__intro">
+                Загрузите документ технического задания для начала работы. Выберите
+                файл на устройстве или перетащите его в область ниже.
+              </p>
+              <div
+                class="upload-panel"
+                role="group"
+                aria-labelledby="upload-panel-label"
+              >
+                <p id="upload-panel-label" class="upload-panel__label-text">
+                  Загрузка документа
+                </p>
+                <p class="upload-panel__hint">
+                  Перетащите файл сюда или нажмите кнопку для выбора.
+                </p>
+                <input
+                  id="ts-document-file"
+                  class="visually-hidden"
+                  type="file"
+                  accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                />
+                <div class="upload-panel__row">
+                  <label for="ts-document-file" class="upload-panel__action">
+                    Выбрать файл
+                  </label>
+                  <button
+                    type="button"
+                    id="ts-upload-submit"
+                    class="upload-panel__submit"
+                    disabled
+                    aria-busy="false"
+                  >
+                    Загрузить
+                  </button>
+                </div>
+                <p
+                  class="upload-panel__selected"
+                  id="upload-selected-name"
+                  hidden
+                ></p>
+                <p
+                  class="upload-panel__feedback"
+                  id="upload-feedback"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></p>
+                <p class="upload-panel__formats">
+                  <span class="upload-panel__formats-title">Поддерживаемые форматы:</span>
+                  DOCX и PDF
+                </p>
+              </div>
+            </div>
+
+            <!--
+              Interface states (UI-only): toggle visibility with `hidden`;
+              one panel visible at a time. Default: idle.
+            -->
+            <div
+              class="interface-states"
+              role="region"
+              aria-label="Состояние процесса"
+            >
+              <div
+                class="interface-state interface-state--idle"
+                id="interface-state-idle"
+                data-interface-state="idle"
+              >
+                <div class="interface-state__icon" aria-hidden="true">
+                  <svg
+                    class="interface-state__glyph"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect
+                      x="5"
+                      y="4"
+                      width="14"
+                      height="16"
+                      rx="2"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M8 9h8M8 12h6M8 15h7"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div class="interface-state__body">
+                  <p class="interface-state__badge">Готово к работе</p>
+                  <h3 class="interface-state__title">Можно начать</h3>
+                  <p class="interface-state__text">
+                    Когда будете готовы, выберите или перетащите документ выше.
+                    Дальнейшие этапы отобразятся здесь после подключения сценария
+                    обработки.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                class="interface-state interface-state--uploading"
+                id="interface-state-uploading"
+                data-interface-state="uploading"
+                hidden
+              >
+                <div class="interface-state__icon" aria-hidden="true">
+                  <svg
+                    class="interface-state__glyph interface-state__glyph--motion"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 4v12m0 0l-3.5-3.5M12 16l3.5-3.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M5 20h14"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div class="interface-state__body">
+                  <p class="interface-state__badge interface-state__badge--busy">
+                    Выполняется
+                  </p>
+                  <h3 class="interface-state__title">Загрузка документа</h3>
+                  <p class="interface-state__text">
+                    Идёт передача файла. Не закрывайте страницу до завершения
+                    загрузки.
+                  </p>
+                  <div class="process-progress">
+                    <p
+                      class="process-progress__status"
+                      id="upload-process-status"
+                      role="status"
+                      aria-live="polite"
+                    ></p>
+                    <p
+                      class="process-progress__percent"
+                      id="upload-progress-percent"
+                      aria-hidden="true"
+                    >
+                      0%
+                    </p>
+                    <div
+                      class="process-progress__track"
+                      id="upload-progress-bar"
+                      role="progressbar"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow="0"
+                      aria-label="Ход загрузки файла"
+                    >
+                      <div
+                        class="process-progress__fill"
+                        id="upload-progress-fill"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="interface-state interface-state--analyzing"
+                id="interface-state-analyzing"
+                data-interface-state="analyzing"
+                hidden
+              >
+                <div class="interface-state__icon" aria-hidden="true">
+                  <svg
+                    class="interface-state__glyph interface-state__glyph--motion"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="6"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M16 16l4 4"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div class="interface-state__body">
+                  <p class="interface-state__badge interface-state__badge--busy">
+                    Выполняется
+                  </p>
+                  <h3 class="interface-state__title">Анализ документа</h3>
+                  <p class="interface-state__text">
+                    Выполняется проверка ТЗ на соответствие требованиям,
+                    связанным с ГОСТ. Это может занять некоторое время.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                class="interface-state interface-state--result"
+                id="interface-state-result"
+                data-interface-state="result"
+                hidden
+              >
+                <div class="interface-state__icon" aria-hidden="true">
+                  <svg
+                    class="interface-state__glyph"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect
+                      x="4"
+                      y="4"
+                      width="16"
+                      height="16"
+                      rx="2"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M8 12.5l2.5 2.5L16 9"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div class="interface-state__body">
+                  <p class="interface-state__badge interface-state__badge--done">
+                    Завершено
+                  </p>
+                  <h3 class="interface-state__title">Анализ завершён</h3>
+                  <p class="interface-state__text">
+                    Ниже приведён итог проверки и список замечаний по результатам
+                    анализа документа.
+                  </p>
+                  <div
+                    class="analysis-results"
+                    id="analysis-results-root"
+                    aria-label="Результаты анализа документа"
+                    tabindex="-1"
+                  >
+                    <p
+                      class="analysis-results__summary"
+                      id="analysis-result-summary"
+                      role="status"
+                    ></p>
+                    <div
+                      class="analysis-results__export-wrap"
+                      id="analysis-export-wrap"
+                      hidden
+                    >
+                      <button
+                        type="button"
+                        class="analysis-results__export-json"
+                        id="analysis-export-json"
+                      >
+                        Скачать отчёт JSON
+                      </button>
+                      <button
+                        type="button"
+                        class="analysis-results__export-csv"
+                        id="analysis-export-csv"
+                      >
+                        Скачать чек-лист CSV
+                      </button>
+                      <button
+                        type="button"
+                        class="analysis-results__export-docx"
+                        id="analysis-export-docx"
+                      >
+                        Скачать отчёт DOCX
+                      </button>
+                    </div>
+                    <div
+                      class="analysis-results__issues-wrap"
+                      id="analysis-issues-wrap"
+                      hidden
+                    >
+                      <h4 class="analysis-issues__heading" id="analysis-issues-heading">
+                        Найденные замечания
+                      </h4>
+                      <div
+                        class="analysis-issues__filter-bar"
+                        id="analysis-issues-filter-bar"
+                        aria-label="Фильтрация списка замечаний"
+                      >
+                        <div class="analysis-issues__filter-fields">
+                          <div class="analysis-issues__filter-field">
+                            <label
+                              class="analysis-issues__filter-label"
+                              for="analysis-filter-check-type"
+                              >Тип замечания</label
+                            >
+                            <select
+                              id="analysis-filter-check-type"
+                              class="analysis-issues__filter-select"
+                            >
+                              <option value="">Все типы</option>
+                            </select>
+                          </div>
+                          <div class="analysis-issues__filter-field">
+                            <label
+                              class="analysis-issues__filter-label"
+                              for="analysis-filter-severity"
+                              >Серьёзность</label
+                            >
+                            <select
+                              id="analysis-filter-severity"
+                              class="analysis-issues__filter-select"
+                            >
+                              <option value="">Все уровни</option>
+                            </select>
+                          </div>
+                          <button
+                            type="button"
+                            class="analysis-issues__filter-reset"
+                            id="analysis-filter-reset"
+                          >
+                            Сбросить фильтры
+                          </button>
+                        </div>
+                      </div>
+                      <p
+                        class="analysis-issues__filter-empty"
+                        id="analysis-issues-filter-empty"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                      >
+                        По выбранным условиям замечаний не найдено. Измените фильтры
+                        или сбросьте их, чтобы снова показать весь список.
+                      </p>
+                      <ul
+                        class="analysis-issues"
+                        id="analysis-issues-list"
+                        aria-labelledby="analysis-issues-heading"
+                      ></ul>
+                    </div>
+                    <p
+                      class="analysis-issues__empty"
+                      id="analysis-issues-empty"
+                      hidden
+                    >
+                      По результатам поддерживаемых проверок отдельные замечания
+                      не сформированы: список пуст.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="interface-state interface-state--error"
+                id="interface-state-error"
+                data-interface-state="error"
+                tabindex="-1"
+                hidden
+              >
+                <div class="interface-state__icon" aria-hidden="true">
+                  <svg
+                    class="interface-state__glyph"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="8"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M12 8v5M12 16h.01"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div class="interface-state__body">
+                  <p class="interface-state__badge interface-state__badge--warn">
+                    Ошибка
+                  </p>
+                  <h3 class="interface-state__title">Операция не выполнена</h3>
+                  <p
+                    class="interface-state__text"
+                    id="interface-error-detail"
+                    role="alert"
+                    aria-live="assertive"
+                  >
+                    Завершить действие не удалось. Проверьте файл и подключение к
+                    сети, затем повторите попытку.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <script src="/static/js/upload.js" defer></script>
+
+      <footer class="page__footer">
+        <p class="page__footer-text">
+          Структурированная проверка технических заданий на соответствие
+          требованиям ГОСТ.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+# Runtime — aligned with [project.dependencies] in pyproject.toml
+fastapi==0.135.2
+uvicorn[standard]==0.42.0
+python-multipart==0.0.22
+python-docx==1.1.2
+pypdf==5.1.0

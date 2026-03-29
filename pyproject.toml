@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gost-ts-analyzer"
+version = "0.1.0"
+description = "Web service for analyzing technical specification documents for GOST-related compliance."
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi==0.135.2",
+    "uvicorn[standard]==0.42.0",
+    "python-multipart==0.0.22",
+    "python-docx==1.1.2",
+    "pypdf==5.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*"]

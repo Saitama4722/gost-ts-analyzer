@@ -1,0 +1,41 @@
+"""Rule and configuration data (Python modules only; no validation engine).
+
+Data is grouped by purpose; structure code imports from submodules to avoid
+duplicating magic strings and patterns.
+"""
+
+from backend.app.rules.common_rules import (
+    FORBIDDEN_VAGUE_PHRASES,
+    GlossaryTermEntry,
+    GLOSSARY_CANONICAL_TERMS,
+    MAX_UPPERCASE_HEADING_BLOCK_LEN,
+    MEASUREMENT_FIRST_TOKENS,
+    NUMBERED_HEADING_DEEP_PATTERN,
+    NUMBERED_HEADING_DOT_PATTERN,
+    NUMBERED_HEADING_TWO_PART_PATTERN,
+    NUMERIC_TITLE_PREFIX_PATTERN,
+)
+from backend.app.rules.section_rules import (
+    KNOWN_SPECIAL_SECTIONS,
+    REQUIRED_SECTIONS,
+    REQUIRED_SECTION_TEMPLATES,
+    SECTION_KEYWORDS_FOR_HEADING_DETECTION,
+    SECTION_ORDER_EXPECTED,
+)
+
+__all__ = [
+    "FORBIDDEN_VAGUE_PHRASES",
+    "GlossaryTermEntry",
+    "GLOSSARY_CANONICAL_TERMS",
+    "KNOWN_SPECIAL_SECTIONS",
+    "MAX_UPPERCASE_HEADING_BLOCK_LEN",
+    "MEASUREMENT_FIRST_TOKENS",
+    "NUMBERED_HEADING_DEEP_PATTERN",
+    "NUMBERED_HEADING_DOT_PATTERN",
+    "NUMBERED_HEADING_TWO_PART_PATTERN",
+    "NUMERIC_TITLE_PREFIX_PATTERN",
+    "REQUIRED_SECTIONS",
+    "REQUIRED_SECTION_TEMPLATES",
+    "SECTION_KEYWORDS_FOR_HEADING_DETECTION",
+    "SECTION_ORDER_EXPECTED",
+]
