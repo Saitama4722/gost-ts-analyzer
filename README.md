@@ -1,369 +1,367 @@
 # GOST TS Analyzer
 
-**GOST TS Analyzer** is a self-contained web application that ingests Russian technical specification documents (DOCX or PDF), extracts and normalizes text, infers a lightweight section structure, and runs a battery of **rule-based compliance and quality checks** aligned with common expectations for GOST-oriented technical specifications. Results are shown in the browser as structured issues with fragments and recommendations, and can be exported as JSON, CSV, or a simple DOCX report.
+## 🚀 Overview
+
+**GOST TS Analyzer** is a self-contained web service and UI for analyzing Russian technical specification documents (**DOCX** and **PDF**). It extracts and normalizes text, infers a lightweight section structure, runs **deterministic, rule-based checks** aligned with common expectations for GOST-style technical documentation, and returns structured findings with locations, severity, and recommendations. Results are browsable in the browser and exportable as **JSON**, **CSV**, or a minimal **DOCX** report.
 
 ---
 
-## Key capabilities
+## ✨ Key Features
 
-- Upload **DOCX** and **PDF** files with type validation and clear error responses  
-- **Text extraction** (python-docx / PyPDF) and **normalization** for consistent downstream analysis  
-- **Structure detection**: headings, sections, and an enriched internal tree used by checks  
-- **Many distinct checks** covering structure, required content signals, wording quality, numbers and units, references, terminology, and duplicate phrasing  
-- **Unified issue model** with severity, locations, and recommendations  
-- **Web UI**: progress feedback, expandable issue cards, filtering by issue type  
-- **Exports**: full analysis JSON (download), issues CSV, DOCX report via server endpoint  
-- **Windows one-click launcher** (`start_app.bat`): free port selection, health check, browser open  
-
----
-
-## Why this project matters
-
-Technical specifications are often long, inconsistent, and hard to review manually. This tool automates **repeatable, deterministic checks** so teams can catch missing sections, weak requirement wording, broken figure/table/appendix references, and terminology drift **before** formal review cycles. It is aimed at **document quality and GOST-related conformance signals**, not at replacing human judgment or legal certification.
+- **DOCX / PDF ingestion** with MIME and extension validation; clear HTTP error responses for unsupported types and extraction failures  
+- **Text extraction** via `python-docx` and `pypdf`, plus **normalization** and a **unified internal document model** (blocks and full text)  
+- **Structure pipeline**: heading/section detection, internal tree, and enrichment used by all structure-aware checks  
+- **Broad check coverage**: structure, required content signals, requirement wording quality, numeric signals and units, references, terminology, and duplicate formulations  
+- **Unified issue model** aggregated from check outputs, plus a **summary report** object in the API response  
+- **Web UI**: upload flow with progress, expandable issue cards, filtering by issue type, exports  
+- **Windows launcher** (`start_app.bat`): resolves Python/venv, binds **127.0.0.1** on **8000**, else **8765**, else the first free port in **8001–8100**; waits for `/api/health`; opens the default browser (uses `curl` for the health probe)
 
 ---
 
-## Technology stack
+## 🎯 Why this project matters
 
-| Layer | Technology |
-|--------|------------|
-| Backend | Python 3.10+, **FastAPI**, Uvicorn |
-| Documents | **python-docx**, **pypdf** |
-| Analysis | Rule dictionaries, regex, heuristics (no heavy ML stack in dependencies) |
-| Frontend | HTML, CSS, vanilla JavaScript |
-| Packaging | `pyproject.toml` + `requirements.txt` |
+Technical specifications are long, dense, and easy to ship with inconsistent structure, weak requirements, broken cross-references, and terminology drift. Manual review does not scale and varies between reviewers. This tool automates **repeatable, transparent checks** so teams can surface likely gaps and quality risks **before** heavy review cycles. It targets **document quality and GOST-oriented conformance signals**; it does not replace expert judgment or certify compliance against a specific standard edition or legal regime.
 
 ---
 
-## Architecture overview
+## 🧠 How it works
 
-```text
-Browser (static JS + templates)
-        │  HTTP
-        ▼
-FastAPI (`backend.app.main`)
-        │  upload → extract → normalize → unify blocks
-        ▼
-Structure pipeline (`structure_detector`, `structure_builder`, `structure_enricher`)
-        │
-        ▼
-Check modules (`backend.app.checks.*`) + rules data (`backend.app.rules.*`)
-        │
-        ▼
-Reporting (`issues_builder`, `report_builder`, optional `docx_report_export`)
-        │
-        ▼
-JSON response: extraction, structure, checks, issues, report
-```
-
-The primary analysis entry point is **`POST /api/upload`**, which returns a single structured payload consumed by the UI and export actions.
+1. **Upload** — The client sends a file to `POST /api/upload`; the server stores it under `uploads/` (ignored by Git) for processing.  
+2. **Parse** — DOCX and PDF paths extract paragraph/page text into the unified representation.  
+3. **Normalize** — Text is normalized for consistent matching across checks.  
+4. **Structure** — Headings and sections are detected and assembled into an enriched structure graph.  
+5. **Checks** — Modular validators read structure and full text (and blocks where needed); each produces structured results merged into one `checks` object.  
+6. **Output** — Issues are serialized, a human-oriented `report` is built, and the full payload is returned as JSON for the UI and export actions. DOCX report export reposts that payload to `POST /api/export/report-docx`.
 
 ---
 
-## Implemented functionality
+## 🏗 Tech stack
 
-- **HTTP API**: `GET /` (main page), `GET /api/health`, `POST /api/upload`, `POST /api/export/report-docx`  
-- **DOCX/PDF ingestion** with unsupported-type handling and extraction error responses  
-- **Section and heading logic** feeding all structure-dependent checks  
-- **Issue aggregation** and a human-oriented **report** object in the API response  
-- **Client-side** JSON and CSV generation from the last successful analysis; **server-side** minimal DOCX report build from posted JSON  
-
----
-
-## Analysis checks currently available
-
-The following checks are wired in `backend.app.main` for both DOCX and PDF pipelines (same set):
-
-| Area | Check focus |
-|------|-------------|
-| Structure | Required sections presence, expected section order, structure completeness |
-| Content signals | Purpose / goal, scope, functional requirements, non-functional requirements (headings and phrase signals for reliability, performance, security, usability, compatibility, etc.), acceptance criteria |
-| Requirement quality | Vague wording, hard-to-verify formulations |
-| Metrics | Numerical characteristics presence, measurement units (SI-oriented signals) |
-| References | Figure, table, and appendix references |
-| Consistency | Terminology vs glossary-style canonical terms, duplicate or near-duplicate formulations |
-
-Checks are **heuristic and dictionary-driven**; they flag likely problems and gaps rather than proving full standard compliance in every jurisdiction or edition.
+| Area | Technology |
+|------|------------|
+| **Backend** | Python 3.10+, **FastAPI**, Uvicorn |
+| **Uploads** | `python-multipart` |
+| **DOCX** | `python-docx` |
+| **PDF** | `pypdf` |
+| **Analysis** | Rule modules under `backend/app/rules/`, regex and string heuristics (no ML stack in runtime dependencies) |
+| **Structure** | `structure_detector`, `structure_builder`, `structure_enricher` |
+| **Frontend** | `templates/index.html`, `static/css`, `static/js` (vanilla JavaScript) |
+| **Packaging** | `pyproject.toml`, `requirements.txt`; dev/test extras in `requirements-dev.txt` |
 
 ---
 
-## Project structure
+## ⚙️ Implemented functionality
+
+Grounded on `docs/progress.md` and the current codebase:
+
+- **Project foundation** — Repository layout, FastAPI app, pinned dependencies, local run path documented below  
+- **UI** — Main page, responsive layout, upload block, states, polished styling, mobile-oriented refinements, readable results flow  
+- **Upload API** — Backend `POST /api/upload`, frontend wiring, type validation, error handling  
+- **Progress UX** — Progress bar, percentage, staged status text, stable stage transitions  
+- **Extraction** — DOCX extraction, basic PDF text extraction, normalization, unified document format  
+- **Structure** — Heading/section detection, internal structure representation, enrichment for downstream checks  
+- **Rules data** — Templates for required sections, vague-wording and related dictionaries, glossary-oriented terminology data  
+- **Checks** — Required sections, section order, structure completeness; purpose/goal; scope; functional requirements; non-functional requirement signals (headings and phrase lists); acceptance criteria; vague wording; unverifiable formulations; numerical characteristics; measurement units; figure/table/appendix references; terminology consistency; duplicate formulations  
+- **Reporting** — Issue list serialization, final analysis report object, UI rendering with fragments and type differentiation, filtering  
+- **Exports** — Client-side JSON and CSV from the last successful analysis; server-side minimal DOCX from posted analysis JSON  
+- **Quality pass** — DOCX/PDF scenarios, check coverage smoke behavior, UI error paths, stabilization  
+- **Windows** — One-click `start_app.bat` with health check and browser launch  
+
+**Not in scope today:** authentication, persistent user storage, layout-aware PDF parsing, optional items from the internal spec that are not wired in `main.py` (for example requirement–acceptance traceability is not implemented as a separate check).
+
+---
+
+## 🔍 Current checks / analysis
+
+The same check set runs for **both DOCX and PDF** pipelines (`backend/app/main.py`).
+
+| Theme | What it evaluates |
+|-------|-------------------|
+| **Structure** | Presence of required sections; expected section order; overall structure completeness (informed by presence results) |
+| **Purpose & scope** | Signals for document purpose/goal and scope / application area |
+| **Requirements** | Functional requirements; non-functional requirement signals (dedicated headings and body phrases—reliability, performance, security, usability, compatibility, and related attributes); acceptance criteria |
+| **Requirement quality** | Vague or weak wording; formulations that are hard to verify objectively |
+| **Numbers & units** | Presence of numerical characteristics; measurement-unit signals with an SI-oriented posture |
+| **References** | References to figures, tables, and appendices |
+| **Consistency** | Terminology vs canonical glossary-style terms; duplicate or near-duplicate formulations |
+
+All checks are **heuristic and dictionary-driven**. They flag **likely** problems and gaps; they do not prove universal GOST compliance.
+
+---
+
+## 📂 Project structure
 
 ```text
 gost-ts-analyzer/
-├── backend/app/           # FastAPI app, extraction, normalization, structure, checks, rules, reporting
-│   ├── checks/            # Individual check implementations
-│   ├── rules/             # Section templates, phrases, glossary data
-│   └── reporting/       # Issues, report, DOCX export
-├── static/                # CSS and JavaScript
-├── templates/             # index.html
-├── tests/                 # Pytest suite
-├── docs/                  # Internal progress notes and specification notes
-├── start_app.bat          # Windows launcher
-├── requirements.txt       # Runtime dependencies
-├── requirements-dev.txt   # Dev/test extras
-├── pyproject.toml         # Project metadata and dependency list
+├── backend/app/
+│   ├── main.py              # FastAPI app, routes, orchestration
+│   ├── docx_extraction.py   # DOCX text extraction
+│   ├── pdf_extraction.py    # PDF text extraction
+│   ├── text_normalizer.py   # Normalization
+│   ├── document_unifier.py  # Unified blocks + full text
+│   ├── structure_*.py       # Detection, tree, enrichment
+│   ├── checks/              # One module per check family
+│   ├── rules/               # Section templates, phrases, glossary data
+│   └── reporting/           # Issues, report, DOCX export
+├── static/                  # CSS, JavaScript
+├── templates/               # index.html
+├── tests/                   # pytest suite
+├── docs/                    # progress notes, internal specification text
+├── uploads/                 # temporary storage (gitignored)
+├── start_app.bat            # Windows launcher
+├── requirements.txt
+├── requirements-dev.txt
+├── pyproject.toml
 └── README.md
 ```
 
 ---
 
-## How to run locally
+## ▶️ Getting started
 
 ### Prerequisites
 
-- **Python 3.10+**  
-- `pip`  
+- **Python 3.10+** and `pip`
 
-### Install and start (any OS)
+### Install and run (any OS)
 
 ```bash
 cd gost-ts-analyzer
 python -m venv .venv
 # Windows: .venv\Scripts\activate
-# Unix:    source .venv/bin/activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open **http://127.0.0.1:8000** in a browser.
+Open **http://127.0.0.1:8000/** in a browser.
 
 ### Windows quick start
 
-Double-click or run **`start_app.bat`** from the project root. It picks a free port (8000–8100), starts Uvicorn, waits for **`/api/health`**, and opens the app. **curl** must be available (included on recent Windows 10/11).
+From the project root, run **`start_app.bat`**. It tries **8000**, then **8765**, then **8001–8100** for the first bindable port, starts Uvicorn, polls **`GET /api/health`** via `curl`, then opens the app. Ensure dependencies are installed in `.venv` or `venv` if you use those.
 
-### Run tests (optional)
+### Example API usage
+
+Health:
 
 ```bash
-pip install -r requirements-dev.txt
+curl -s http://127.0.0.1:8000/api/health
+```
+
+Upload (multipart field name **`file`**):
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/upload -F "file=@path/to/specification.docx"
+```
+
+DOCX report export accepts a JSON body matching the structured analysis payload returned by a successful upload (typically replayed from the client after analysis).
+
+### Tests (optional)
+
+```bash
+pip install -r requirements-dev.txt pytest
 pytest
 ```
 
 ---
 
-## API notes
+## 🌐 Keywords / topics
 
-- **`POST /api/upload`** — multipart file field `file`; response includes `extraction`, `structure`, `checks`, `issues`, and `report` on success.  
-- **`GET /api/health`** — `{"status": "ok"}`.  
-- **`POST /api/export/report-docx`** — JSON body shaped like the client-held analysis payload; returns a DOCX download.  
-
-Uploaded files are stored under **`uploads/`** during processing; this directory is **gitignored** and should not be committed.
+**GOST**, **technical specification**, **technical assignment**, **document analysis**, **requirements validation**, **requirements quality**, **compliance checking**, **rule-based analysis**, **DOCX**, **PDF**, **text extraction**, **document structure**, **FastAPI**, **Python**, **Uvicorn**, **terminology consistency**, **reference validation**, **structured reporting**, **issue list**, **export JSON CSV DOCX**, **Russian technical documentation**.
 
 ---
 
-## Interface notes
+## 📬 Contact
 
-- Upload with visual progress and stage text  
-- Results as **cards** with expand/collapse for full messages and fragments  
-- **Filtering** by issue category/type  
-- **Export** buttons for JSON, CSV, and DOCX (DOCX uses the export API)  
+**Telegram:** [https://t.me/VadikQA](https://t.me/VadikQA)
 
 ---
 
-## Possible future improvements
-
-Grounded extensions only; none of these are required for the current codebase to run.
-
-- Richer PDF layout-aware extraction where needed  
-- Additional languages or document profiles beyond the current Russian TS focus  
-- Persistent storage and user accounts (not present today)  
-- Optional CI workflow if the maintainers want automated tests on every push  
-- Optional hardening of deployment and configuration (reverse proxy, limits) for multi-user hosting  
-
----
-
-## Keywords / topics
-
-**GOST document analysis**, **technical specification analyzer**, **requirements analysis**, **compliance checking**, **document validation**, **DOCX and PDF analysis**, **FastAPI**, **Python**, **rule-based NLP**, **requirement quality**, **Russian technical documentation**, **structured reporting**, **issue tracking**, **terminology consistency**, **reference validation**.
-
-Suggested **GitHub topics**: `gost`, `gost-analyzer`, `technical-specification`, `requirements-analysis`, `compliance-checking`, `document-analysis`, `fastapi`, `python`, `docx`, `pdf`, `validation`, `nlp`.
-
----
-
-## Contact
-
-- **Telegram**: [https://t.me/VadikQA](https://t.me/VadikQA)
-
----
-
-## License
+## 📄 License
 
 This project is released under the [MIT License](LICENSE).
 
 ---
 
----
+# GOST TS Analyzer
 
-# GOST TS Analyzer — русская версия
+## 🚀 Описание
 
-**GOST TS Analyzer** — это автономное веб-приложение для загрузки технических заданий и спецификаций в форматах **DOCX** и **PDF**, извлечения и нормализации текста, построения упрощённой структуры разделов и выполнения **набора детерминированных проверок** на соответствие распространённым ожиданиям к оформлению и содержанию документов в духе требований ГОСТ. Результаты отображаются в браузере в виде структурированных замечаний с фрагментами и рекомендациями; доступен экспорт в **JSON**, **CSV** и упрощённый **DOCX**.
-
----
-
-## Ключевые возможности
-
-- Загрузка **DOCX** и **PDF** с проверкой типа и понятными ответами об ошибках  
-- **Извлечение текста** (python-docx / PyPDF) и **нормализация**  
-- **Определение структуры**: заголовки, разделы, внутреннее дерево для проверок  
-- **Множество отдельных проверок**: структура, обязательные смысловые блоки, качество формулировок, числа и единицы, ссылки, терминология, дубликаты формулировок  
-- **Единая модель замечаний** с серьёзностью, привязкой к фрагментам и рекомендациями  
-- **Веб-интерфейс**: прогресс, карточки замечаний с раскрытием, фильтрация  
-- **Экспорт**: JSON и CSV на стороне клиента; DOCX через серверный endpoint  
-- **Запуск одним кликом в Windows** (`start_app.bat`): свободный порт, health-check, открытие браузера  
+**GOST TS Analyzer** — автономный веб-сервис с интерфейсом для анализа технических спецификаций на русском языке в форматах **DOCX** и **PDF**. Сервис извлекает и нормализует текст, восстанавливает упрощённую структуру разделов и выполняет **детерминированные проверки на основе правил**, ориентированные на типичные ожидания к оформлению и содержанию документов в духе ГОСТ. Результат — структурированные замечания с привязкой к фрагментам, уровнем серьёзности и рекомендациями; данные доступны в браузере и экспортируются в **JSON**, **CSV** или компактный отчёт **DOCX**.
 
 ---
 
-## Зачем это нужно
+## ✨ Ключевые возможности
 
-Технические спецификации часто объёмны и неоднородны; ручная вычитка отнимает время и даёт расхождения между ревьюерами. Инструмент выполняет **повторяемые проверки**: пропущенные разделы, слабые формулировки требований, некорректные ссылки на рисунки, таблицы и приложения, расхождения терминологии. Он помогает **повысить качество документа** и выявить типичные несоответствия ожиданиям ГОСТ-ориентированного ТЗ, **не заменяя** экспертизу и официальное согласование.
-
----
-
-## Технологический стек
-
-| Уровень | Технологии |
-|--------|------------|
-| Бэкенд | Python 3.10+, **FastAPI**, Uvicorn |
-| Документы | **python-docx**, **pypdf** |
-| Анализ | Правила, словари, эвристики и регулярные выражения (без тяжёлых ML-библиотек в зависимостях) |
-| Фронтенд | HTML, CSS, чистый JavaScript |
-| Сборка | `pyproject.toml`, `requirements.txt` |
+- **Приём DOCX и PDF** с проверкой типа (расширение и MIME); понятные HTTP-ответы при неподдерживаемом формате и ошибках извлечения  
+- **Извлечение текста** через `python-docx` и `pypdf`, **нормализация** и **единая внутренняя модель** документа  
+- **Конвейер структуры**: заголовки и разделы, дерево, обогащение для всех зависимых проверок  
+- **Широкий набор проверок**: структура, обязательные смысловые блоки, качество формулировок требований, числа и единицы, ссылки, терминология, дубликаты формулировок  
+- **Единая модель замечаний** и **итоговый объект отчёта** в JSON-ответе API  
+- **Веб-интерфейс**: загрузка с прогрессом, раскрывающиеся карточки замечаний, фильтрация по типу, экспорт  
+- **Запуск в Windows** (`start_app.bat`): поиск Python/.venv/venv, привязка к **127.0.0.1** на **8000**, иначе **8765**, иначе первый свободный порт **8001–8100**; ожидание `/api/health`; открытие браузера (проверка готовности через `curl`)
 
 ---
 
-## Архитектура (кратко)
+## 🎯 Зачем это нужно
+
+Технические задания и спецификации часто большие, с неоднородной структурой и формулировками, которые сложно проверить на полноту и однозначность. Ручная ревизия дорогая и субъективная. Инструмент выполняет **воспроизводимые, прозрачные проверки**, чтобы заранее выявлять вероятные пробелы и риски по качеству документа. Он даёт **сигналы соответствия ожиданиям ГОСТ-ориентированного ТЗ**, но **не заменяет** экспертизу и не является сертификацией по конкретной редакции нормативного документа.
+
+---
+
+## 🧠 Как это устроено
+
+1. **Загрузка** — клиент отправляет файл на `POST /api/upload`; сервер временно сохраняет его в `uploads/` (каталог не коммитится).  
+2. **Разбор** — для DOCX и PDF текст попадает в унифицированное представление.  
+3. **Нормализация** — текст приводится к виду, удобному для сопоставления правилами.  
+4. **Структура** — определяются заголовки и разделы, строится обогащённая структура.  
+5. **Проверки** — модули читают структуру, полный текст и при необходимости блоки; результаты объединяются в объект `checks`.  
+6. **Выдача** — строятся `issues` и `report`, ответ отдаётся JSON-ом для UI и экспорта; DOCX-отчёт собирается повторной отправкой этого JSON на `POST /api/export/report-docx`.
+
+---
+
+## 🏗 Технологический стек
+
+| Область | Технологии |
+|---------|------------|
+| **Бэкенд** | Python 3.10+, **FastAPI**, Uvicorn |
+| **Загрузки** | `python-multipart` |
+| **DOCX** | `python-docx` |
+| **PDF** | `pypdf` |
+| **Анализ** | Модули правил в `backend/app/rules/`, регулярные выражения и эвристики (в зависимостях нет ML-стека) |
+| **Структура** | `structure_detector`, `structure_builder`, `structure_enricher` |
+| **Фронтенд** | `templates/index.html`, `static/css`, `static/js` (чистый JavaScript) |
+| **Сборка** | `pyproject.toml`, `requirements.txt`; для разработки и тестов — `requirements-dev.txt` |
+
+---
+
+## ⚙️ Реализованная функциональность
+
+Опираясь на `docs/progress.md` и текущий код:
+
+- **База проекта** — структура репозитория, приложение FastAPI, зафиксированные зависимости, сценарий локального запуска  
+- **Интерфейс** — главная страница, адаптивная вёрстка, блок загрузки, состояния интерфейса, выверенный стиль, доработки под мобильные ширины  
+- **API загрузки** — `POST /api/upload` на бэкенде, связка с фронтендом, валидация типа, обработка ошибок  
+- **Прогресс** — индикатор, процент, текстовые этапы, устойчивые переходы между этапами  
+- **Извлечение** — DOCX, базовое извлечение текста из PDF, нормализация, унифицированный формат  
+- **Структура** — распознавание заголовков и разделов, внутреннее представление, обогащение  
+- **Данные правил** — шаблоны обязательных разделов, словари расплывчатых и родственных формулировок, глоссарий для терминологии  
+- **Проверки** — обязательные разделы, порядок разделов, полнота структуры; назначение/цель; область применения; функциональные требования; сигналы нефункциональных требований (заголовки и фразы в тексте — надёжность, производительность, безопасность, удобство, совместимость и смежные аспекты); критерии приёмки; расплывчатые формулировки; труднопроверяемые утверждения; числовые характеристики; единицы измерения; ссылки на рисунки, таблицы и приложения; согласованность терминологии; дубликаты формулировок  
+- **Отчётность** — сериализация списка замечаний, объект итогового отчёта, отображение в UI с фрагментами и различением типов, фильтрация  
+- **Экспорт** — JSON и CSV на клиенте по последнему успешному анализу; сборка DOCX на сервере из переданного JSON  
+- **Стабилизация** — прогоны DOCX/PDF, дымовые сценарии проверок, ошибки UI, финальная стабилизация  
+- **Windows** — `start_app.bat` с проверкой здоровья и открытием браузера  
+
+**Сейчас не реализовано:** аутентификация, постоянное хранилище пользовательских данных, «умное» извлечение из сложной вёрстки PDF, отдельная проверка трассируемости требований к критериям приёмки и другие пункты внутренней спецификации, если они не подключены в `main.py`.
+
+---
+
+## 🔍 Текущие проверки / анализ
+
+Один и тот же набор выполняется для **DOCX и PDF** (`backend/app/main.py`).
+
+| Тема | Содержание |
+|------|------------|
+| **Структура** | Наличие обязательных разделов; ожидаемый порядок; полнота структуры (с учётом результатов по наличию) |
+| **Назначение и область** | Сигналы цели/назначения документа и области применения |
+| **Требования** | Функциональные требования; нефункциональные (отдельные заголовки разделов и характерные фразы в тексте); критерии приёмки |
+| **Качество требований** | Расплывчатые формулировки; формулировки, которые трудно проверить объективно |
+| **Числа и единицы** | Наличие числовых характеристик; сигналы единиц измерения с ориентацией на СИ |
+| **Ссылки** | Ссылки на рисунки, таблицы и приложения |
+| **Согласованность** | Терминология относительно канонических терминов глоссария; дубликаты и близкие повторы формулировок |
+
+Все проверки **эвристические** и опираются на словари и правила; они указывают на **вероятные** проблемы, а не доказывают полное соответствие ГОСТ во всех случаях.
+
+---
+
+## 📂 Структура проекта
 
 ```text
-Браузер (шаблоны + статический JS)
-        │  HTTP
-        ▼
-FastAPI (`backend.app.main`)
-        │  загрузка → извлечение → нормализация → единые блоки
-        ▼
-Конвейер структуры (detector → builder → enricher)
-        ▼
-Модули проверок (`backend.app.checks.*`) + данные правил (`backend.app.rules.*`)
-        ▼
-Отчётность (issues, report, экспорт DOCX)
-        ▼
-JSON: extraction, structure, checks, issues, report
+gost-ts-analyzer/
+├── backend/app/
+│   ├── main.py              # FastAPI, маршруты, оркестрация
+│   ├── docx_extraction.py   # Извлечение из DOCX
+│   ├── pdf_extraction.py    # Извлечение из PDF
+│   ├── text_normalizer.py   # Нормализация
+│   ├── document_unifier.py  # Блоки и полный текст
+│   ├── structure_*.py       # Детектор, дерево, обогащение
+│   ├── checks/              # Отдельные семейства проверок
+│   ├── rules/               # Шаблоны разделов, фразы, глоссарий
+│   └── reporting/           # Замечания, отчёт, экспорт DOCX
+├── static/                  # CSS, JavaScript
+├── templates/               # index.html
+├── tests/                   # pytest
+├── docs/                    # progress, внутренняя спецификация
+├── uploads/                 # временные файлы (gitignore)
+├── start_app.bat            # Запуск в Windows
+├── requirements.txt
+├── requirements-dev.txt
+├── pyproject.toml
+└── README.md
 ```
 
-Основная точка анализа — **`POST /api/upload`**; ответ целиком используется UI и экспортом.
-
 ---
 
-## Что уже реализовано
-
-- **API**: главная страница, health, загрузка файла, экспорт отчёта DOCX  
-- Приём **DOCX/PDF**, обработка ошибок типа и извлечения  
-- Логика **разделов и заголовков** для всех зависимых проверок  
-- **Сборка замечаний** и **итогового отчёта** в теле ответа  
-- **Клиентский** экспорт JSON/CSV; **серверная** сборка минимального DOCX из JSON  
-
----
-
-## Доступные проверки
-
-Один и тот же набор подключается в `main.py` для DOCX и PDF:
-
-| Область | Содержание проверки |
-|--------|---------------------|
-| Структура | Наличие обязательных разделов, порядок разделов, полнота структуры |
-| Содержание | Назначение/цель, область применения, функциональные требования, нефункциональные требования (заголовки и текстовые сигналы: надёжность, производительность, безопасность, удобство, совместимость и т.д.), критерии приёмки |
-| Качество требований | Расплывчатые формулировки, труднопроверяемые утверждения |
-| Метрики | Наличие числовых характеристик, единицы измерения (ориентация на СИ) |
-| Ссылки | Ссылки на рисунки, таблицы, приложения |
-| Согласованность | Терминология относительно канонического глоссария, дубликаты формулировок |
-
-Проверки **эвристические**; они указывают на вероятные пробелы и риски, а не сертифицируют документ по конкретной редакции стандарта.
-
----
-
-## Структура проекта
-
-См. англоязычный раздел [Project structure](#project-structure) — дерево каталогов идентично.
-
----
-
-## Локальный запуск
+## ▶️ Быстрый старт
 
 ### Требования
 
-- **Python 3.10+**  
-- `pip`  
+- **Python 3.10+** и `pip`
 
-### Установка и старт
+### Установка и запуск
 
 ```bash
 cd gost-ts-analyzer
 python -m venv .venv
 # Windows: .venv\Scripts\activate
-# Unix:    source .venv/bin/activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Откройте **http://127.0.0.1:8000**.
+Откройте в браузере **http://127.0.0.1:8000/**.
 
-### Windows: `start_app.bat`
+### Windows
 
-Запуск из корня проекта: выбор свободного порта, старт Uvicorn, ожидание **`/api/health`**, открытие браузера. Нужен **curl** (в современных Windows обычно уже есть).
+Из корня проекта запустите **`start_app.bat`**. Скрипт пробует **8000**, затем **8765**, затем порты **8001–8100**, поднимает Uvicorn, опрашивает **`GET /api/health`** через `curl` и открывает приложение. Зависимости должны быть установлены в `.venv` или `venv`, если вы их используете.
 
-### Тесты
+### Примеры запросов к API
+
+Проверка готовности:
 
 ```bash
-pip install -r requirements-dev.txt
+curl -s http://127.0.0.1:8000/api/health
+```
+
+Загрузка (поле multipart — **`file`**):
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/upload -F "file=@path/to/specification.docx"
+```
+
+Экспорт DOCX принимает JSON с полным структурированным результатом анализа (как после успешной загрузки), обычно тот же объект, что держит клиент после анализа.
+
+### Тесты (по желанию)
+
+```bash
+pip install -r requirements-dev.txt pytest
 pytest
 ```
 
 ---
 
-## API (кратко)
+## 🌐 Ключевые слова / темы
 
-- **`POST /api/upload`** — поле `file` (multipart); при успехе: `extraction`, `structure`, `checks`, `issues`, `report`.  
-- **`GET /api/health`** — проверка готовности сервиса.  
-- **`POST /api/export/report-docx`** — JSON с полным результатом анализа; ответ — файл DOCX.  
-
-Файлы сохраняются в **`uploads/`** на время обработки; каталог **не коммитится** (см. `.gitignore`).
+**ГОСТ**, **техническое задание**, **техническая спецификация**, **анализ документов**, **проверка требований**, **качество требований**, **проверка соответствия**, **правила и эвристики**, **DOCX**, **PDF**, **извлечение текста**, **структура документа**, **FastAPI**, **Python**, **Uvicorn**, **согласованность терминологии**, **проверка ссылок**, **структурированный отчёт**, **список замечаний**, **экспорт JSON CSV DOCX**, **русскоязычная техническая документация**.
 
 ---
 
-## Интерфейс
+## 📬 Контакты
 
-- Загрузка с индикацией прогресса  
-- Карточки замечаний с раскрытием полного текста  
-- Фильтрация по типу замечания  
-- Кнопки экспорта JSON, CSV, DOCX  
+**Telegram:** [https://t.me/VadikQA](https://t.me/VadikQA)
 
 ---
 
-## Возможное развитие
-
-Только реалистичные направления; в коде этого нет и не требуется для работы.
-
-- Более точное извлечение из сложных PDF  
-- Другие типы документов или языки  
-- Учётные записи и хранилище (сейчас отсутствуют)  
-- CI по желанию мейнтейнеров  
-- Усиление конфигурации для публичного хостинга (лимиты, reverse proxy) при необходимости  
-
----
-
-## Ключевые слова / темы
-
-**Анализ документов ГОСТ**, **анализатор технического задания**, **анализ требований**, **проверка соответствия**, **валидация документов**, **DOCX и PDF**, **FastAPI**, **Python**, **правила и эвристики**, **качество требований**, **техническая документация на русском**, **структурированный отчёт**, **терминология**, **проверка ссылок**.
-
-Рекомендуемые **топики GitHub**: `gost`, `gost-analyzer`, `technical-specification`, `requirements-analysis`, `compliance-checking`, `document-analysis`, `fastapi`, `python`, `docx`, `pdf`, `validation`, `nlp`.
-
----
-
-## Контакты
-
-- **Telegram**: [https://t.me/VadikQA](https://t.me/VadikQA)
-
----
-
-## Лицензия
+## 📄 Лицензия
 
 Проект распространяется на условиях [лицензии MIT](LICENSE).
