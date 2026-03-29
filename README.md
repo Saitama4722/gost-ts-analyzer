@@ -168,7 +168,7 @@ Grounded extensions only; none of these are required for the current codebase to
 - Additional languages or document profiles beyond the current Russian TS focus  
 - Persistent storage and user accounts (not present today)  
 - Optional CI workflow if the maintainers want automated tests on every push  
-- Explicit **LICENSE** file once distribution terms are chosen  
+- Optional hardening of deployment and configuration (reverse proxy, limits) for multi-user hosting  
 
 ---
 
@@ -188,7 +188,7 @@ Suggested **GitHub topics**: `gost`, `gost-analyzer`, `technical-specification`,
 
 ## License
 
-This repository does not currently include a `LICENSE` file. Add one to state terms of use and redistribution if you publish or share the code beyond private use.
+This project is released under the [MIT License](LICENSE).
 
 ---
 
@@ -346,7 +346,7 @@ pytest
 - Другие типы документов или языки  
 - Учётные записи и хранилище (сейчас отсутствуют)  
 - CI по желанию мейнтейнеров  
-- Явный файл **LICENSE** при публикации  
+- Усиление конфигурации для публичного хостинга (лимиты, reverse proxy) при необходимости  
 
 ---
 
@@ -366,4 +366,4 @@ pytest
 
 ## Лицензия
 
-В репозитории пока нет файла `LICENSE`. При публичном распространении стоит добавить лицензию и условия использования.
+Проект распространяется на условиях [лицензии MIT](LICENSE).
